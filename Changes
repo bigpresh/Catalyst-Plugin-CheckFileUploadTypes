@@ -1,5 +1,7 @@
 
 {{$NEXT}}
+
+0.02   2023-09-26
 - Rewind filehandles after determining type
 - Intelligent handling for Catalyst::Action::REST actions
 - Better handling for multiple types
