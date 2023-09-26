@@ -45,6 +45,10 @@ sub dispatch {
             upload:
             for my $upload (values %{ $c->req->uploads }) {
                 my $upload_type = $mm->checktype_filehandle($upload->fh);
+                # File::MMagic will haveread from the filehandle, seek it back
+                # to the start so we don't confuse things that expect to just
+                # read from it
+                seek($upload->fh, 0, 0);
                 $c->log->debug(
                     sprintf "Determined type %s for %s",
                     $upload_type, $upload->filename,
