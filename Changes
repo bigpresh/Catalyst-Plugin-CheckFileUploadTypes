@@ -1,5 +1,8 @@
 
 {{$NEXT}}
+- Rewind filehandles after determining type
+- Intelligent handling for Catalyst::Action::REST actions
+- Better handling for multiple types
 
 0.01   2023-09-21
 - Initial version.  Appears to work in testing so far!
