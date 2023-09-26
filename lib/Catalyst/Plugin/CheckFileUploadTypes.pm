@@ -26,10 +26,32 @@ sub dispatch {
         $c->maybe::next::method(@_);
         return 1;
     }
+
+    # If the action is a Catalyst::Action::REST action, then we want to
+    # attempt to find the _method suffixed action that it will forward to
+    # (e.g. index() -> index_POST()) and if we do, look at the attributes
+    # for that instead - as e.g. an index_GET() isn't going to expect uploads
+    # but the index_POST() may well do.
+    my $action = $c->action;
+    if (ref $action eq 'Catalyst::Action::REST') {
+        my $rest_method = $action->name . '_' . $c->req->method;
+        my $controller = $c->component( $action->class );
+        if (my $rest_action = $controller->action_for($rest_method)) {
+            $action = $rest_action;
+        }
+    }
     
     my $mm = File::MMagic->new;
 
-    my $expects_uploads = $c->action->attributes->{ExpectUploads};
+    my $expects_uploads = $action->attributes->{ExpectUploads};
+
+    my %ok_type;
+    for my $type (
+        map { split /[\s,]/ } @{ $action->attributes->{ExpectUploads} }
+    ) {
+        $ok_type{$type}++;
+    }
+
     if (!$expects_uploads) {
         # No uploads expected...
         $c->log->error("Uploads present, but not expected by action");
@@ -45,28 +67,28 @@ sub dispatch {
             upload:
             for my $upload (values %{ $c->req->uploads }) {
                 my $upload_type = $mm->checktype_filehandle($upload->fh);
+                # File::MMagic will haveread from the filehandle, seek it back
+                # to the start so we don't confuse things that expect to just
+                # read from it
+                seek($upload->fh, 0, 0);
                 $c->log->debug(
                     sprintf "Determined type %s for %s",
                     $upload_type, $upload->filename,
                 );
-                for my $type (@{ $expects_uploads }) {
-                    if ($upload_type eq $type) {
-                        # this is fine
+                if ($ok_type{$upload_type}) {
                         next upload;
-                    }
+                } else {
+                    $c->log->warn(
+                        sprintf "Upload %s with unexpected type %s rejected",
+                        $upload->filename,
+                        $upload_type,
+                    );
+                    # FIXME we probably want to make rejections more configurable,
+                    # maybe ability to provide coderef to trigger on reject?
+                    $c->res->status(400);
+                    $c->res->body("Unsupported file content type uploaded");
+                    return;
                 }
-                # If we got here, we checked all the accepted types and this
-                # file didn't match any of them...
-                $c->log->warn(
-                    sprintf "Upload %s with unexpected type %s rejected",
-                    $upload->filename,
-                    $upload_type,
-                );
-                # FIXME we probably want to make rejections more configurable,
-                # maybe ability to provide coderef to trigger on reject?
-                $c->res->status(400);
-                $c->res->body("Unsupported file content type uploaded");
-                return;
             }
 
         }
