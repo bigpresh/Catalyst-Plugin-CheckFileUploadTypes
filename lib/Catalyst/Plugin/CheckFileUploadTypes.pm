@@ -43,6 +43,13 @@ sub dispatch {
     
     my $mm = File::MMagic->new;
 
+    # Detect XML files by opening <?xml tag
+    $mm->addSpecials('text/xml', qr{^<\?xml}i);
+
+    # Detect shell scripts by opening shebang:
+    $mm->addSpecials('text/x-shellscript', qr{^#\!}i);
+
+
     my $expects_uploads = $action->attributes->{ExpectUploads};
 
     my %ok_type;

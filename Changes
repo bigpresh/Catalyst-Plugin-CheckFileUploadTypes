@@ -1,5 +1,6 @@
 
 {{$NEXT}}
+- Detect XML files and shell scripts via File::MMagic Specials patterns
 
 0.02   2023-09-26
 - Rewind filehandles after determining type
