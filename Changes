@@ -1,5 +1,7 @@
 
 {{$NEXT}}
+
+0.10   2023-10-24
 - Detect XML files and shell scripts via File::MMagic Specials patterns
 
 0.02   2023-09-26
