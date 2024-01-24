@@ -4,7 +4,7 @@ package Catalyst::Plugin::CheckFileUploadTypes;
 
 use Data::Printer;
 
-use File::MMagic;
+use File::LibMagic;
 use Moose;
 use namespace::autoclean;
 with 'Catalyst::ClassData';
@@ -40,14 +40,8 @@ sub dispatch {
             $action = $rest_action;
         }
     }
-    
-    my $mm = File::MMagic->new;
 
-    # Detect XML files by opening <?xml tag
-    $mm->addSpecials('text/xml', qr{^<\?xml}i);
 
-    # Detect shell scripts by opening shebang:
-    $mm->addSpecials('text/x-shellscript', qr{^#\!}i);
 
 
     my $expects_uploads = $action->attributes->{ExpectUploads};
@@ -73,11 +67,7 @@ sub dispatch {
             # see if it's a match (and end if so)
             upload:
             for my $upload (values %{ $c->req->uploads }) {
-                my $upload_type = $mm->checktype_filehandle($upload->fh);
-                # File::MMagic will haveread from the filehandle, seek it back
-                # to the start so we don't confuse things that expect to just
-                # read from it
-                seek($upload->fh, 0, 0);
+                my $upload_type = $c->_determine_mime_type($upload->fh);
                 $c->log->debug(
                     sprintf "Determined type %s for %s",
                     $upload_type, $upload->filename,
@@ -108,6 +98,26 @@ sub dispatch {
     # the right type.
     $c->maybe::next::method(@_);
 
+}
+
+{
+
+    my $flm = File::LibMagic->new;
+    sub _determine_mime_type {
+        my ($c, $fh) = @_;
+
+        my $info = $flm->info_from_handle($fh);
+        # File::LibMagic will have read from the filehandle, seek it back
+        # to the start so we don't confuse things that expect to just
+        # read from it
+        seek($fh, 0, 0);
+
+        if ($info) {
+            return $info->{mime_type};
+        } else {
+            return 'application/octet-stream';
+        }
+    }
 }
 
 =head1 NAME
