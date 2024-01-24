@@ -145,7 +145,7 @@ request contains one or more file uploads, the request will be rejected.
 
 The action can also specify the type(s) of files it expects to receive,
 and the request will be rejected if an uploaded file is of a different
-type (as determined by L<File::MMagic> from the file's content, not trusting
+type (as determined by L<File::LibMagic> from the file's content, not trusting
 the file extension or what the client says it is).  This avoids uploading
 executable files / scripts etc to an action which expects image uploads,
 for instance.
@@ -157,7 +157,7 @@ David Precious (BIGPRESH), C<< <davidp@preshweb.co.uk> >>
 
 =head1 COPYRIGHT AND LICENCE
 
-Copyright (C) 2023 by David Precious
+Copyright (C) 2023-2024 by David Precious
 
 This library is free software; you can redistribute it and/or modify
 it under the same terms as Perl itself.
