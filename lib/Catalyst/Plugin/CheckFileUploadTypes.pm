@@ -132,7 +132,7 @@ Catalyst::Plugin::CheckFileUploadTypes - check file uploads are expected and rig
   sub upload_file : Local ExpectUploads { ... }
 
   # They can also specify that any uploaded files must be of expected types
-  # (determined from file content by File::MMagic, not what the client said)
+  # (determined from file content by File::LibMagic, not what the client said)
   sub upload_file : Local ExpectUploads(image/jpeg image/png) { ... }
 
 =head1 DESCRIPTION
